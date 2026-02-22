@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_IMAGE = "your-dockerhub-username/my-private-repo"
+        DOCKER_IMAGE = "ohadd306/temp"
         IMAGE_TAG = "${BUILD_NUMBER}"
         REGISTRY = "https://index.docker.io/v1/"
     }
