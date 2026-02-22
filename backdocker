@@ -1,0 +1,35 @@
+# --- Stage 1: Build ---
+FROM node:20-alpine AS builder
+
+# Set the working directory
+WORKDIR /app
+
+# Copy dependency definitions
+# (If you have a package-lock.json, add it here too)
+COPY package.json ./
+
+# Install all dependencies
+RUN npm install
+
+# Copy the TypeScript config and source code
+COPY tsconfig.json ./
+COPY src ./src
+
+# Build the project (compiles TS to JS)
+# This assumes you have a "build" script in your package.json
+RUN npm run build
+
+# --- Stage 2: Run ---
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Copy only the compiled code and production dependencies from the builder
+COPY --from=builder /app/package.json ./
+RUN npm install --only=production
+COPY --from=builder /app/dist ./dist
+
+# Set the environment and start the app
+# Adjust "dist/index.js" to whatever your main entry point is
+EXPOSE 3000
+CMD ["node", "dist/index.js"]
