@@ -19,7 +19,14 @@ pipeline {
                 checkout scm
             }
         }
-
+    stage('Deploy') { 
+        when {
+            branch 'main'
+        }
+        steps {
+            echo "Deploying to production..."
+        }
+      }    
         stage('Build Docker Image') {
             steps {
                 script {
