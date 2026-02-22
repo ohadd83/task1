@@ -27,22 +27,25 @@ pipeline {
             echo "Deploying to production..."
         }
       }    
-    stage('Build Docker Image') {
-        steps {
-            // We use sh instead of the docker variable
-            sh "docker build -t ${DOCKER_IMAGE}:${IMAGE_TAG} ."
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    docker.build("${DOCKER_IMAGE}:${IMAGE_TAG}")
+                }
+            }
         }
-    }
 
-    stage('Push to DockerHub') {
-        steps {
-            // This safely injects your DockerHub username and password from the 'dockerhub-creds' ID
-            withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USERNAME')]) {
-                sh "echo \$DOCKER_PASSWORD | docker login -u \$DOCKER_USERNAME --password-stdin"
-                sh "docker push ${DOCKER_IMAGE}:${IMAGE_TAG}"
-            }  
+        stage('Push to DockerHub') {
+            steps {
+                script {
+                    docker.withRegistry("${REGISTRY}", "dockerhub-creds") {
+                        docker.image("${DOCKER_IMAGE}:${IMAGE_TAG}").push()
+                    }
+                }
+            }
         }
-    } 
+
+        stage('Deploy to Kubernetes') {
             steps {
                 withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG')]) {
                     script {
@@ -53,8 +56,8 @@ pipeline {
                     }
                 }
             }
-        
-   
+        }
+    }
 
     post {
         success {
